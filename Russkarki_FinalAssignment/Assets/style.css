@@ -1,0 +1,88 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background: linear-gradient(135deg, #74ebd5, #9face6);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    background: #ffffff;
+    width: 700px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.menu {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.menu a {
+    text-decoration: none;
+    background: #4a6cf7;
+    color: #fff;
+    padding: 14px;
+    text-align: center;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.3s ease;
+}
+
+.menu a:hover {
+    background: #364fc7;
+    transform: translateY(-2px);
+}
+
+
+/* Make body a flex container */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background: linear-gradient(135deg, #74ebd5, #9face6);
+    margin: 0;
+}
+
+/* Content wrapper takes remaining space */
+.content-wrapper {
+    flex: 1; /* pushes footer to bottom */
+}
+
+/* Footer styling */
+footer {
+    text-align: center;
+    padding: 15px 0;
+    background: #009688; /* teal – health/clinic vibes */
+    color: #fff;
+    font-size: 20px;
+}
+
+footer {
+    position: relative; /* or fixed if you want it always visible */
+    bottom: 0;
+    width: 100%;
+}
+
