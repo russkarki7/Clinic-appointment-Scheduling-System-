@@ -3,38 +3,53 @@ include "../config/db.php";
 
 $message = "";
 
-// Fetch patients & doctors for dropdowns
+// Fetch patients & doctors
 $patients = $conn->query("SELECT * FROM patients ORDER BY name ASC");
 $doctors = $conn->query("SELECT * FROM doctors ORDER BY name ASC");
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $patient_id = intval($_POST['patient_id']);
+    try {
+$patient_id = intval($_POST['patient_id']);
     $doctor_id = intval($_POST['doctor_id']);
-    $date = $_POST['appointment_date'];
-    $time = $_POST['appointment_time'];
+    $date = date("Y-m-d", strtotime($_POST['appointment_date']));
+    $start = date("H:i:s", strtotime($_POST['start_time']));
+    $end = date("H:i:s", strtotime($_POST['end_time']));
 
-    // Check for overlapping appointment
-    $stmt = $conn->prepare("SELECT * FROM appointments WHERE doctor_id=? AND appointment_date=? AND appointment_time=?");
-    $stmt->bind_param("iss", $doctor_id, $date, $time);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $message = "❌ This doctor already has an appointment at this date and time!";
+    if ($start >= $end) {
+        $message = "End time must be after start time.";
     } else {
-        // Insert appointment
-        $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("iiss", $patient_id, $doctor_id, $date, $time);
-        if ($stmt->execute()) {
-            $message = "✅ Appointment booked successfully!";
+        // Check overlapping appointments
+        $check = $conn->prepare("
+            SELECT appointment_id 
+            FROM appointments 
+            WHERE doctor_id=? AND appointment_date=? 
+              AND NOT (end_time <= ? OR start_time >= ?)
+        ");
+        $check->bind_param("isss", $doctor_id, $date, $start, $end);
+        $check->execute();
+        $res = $check->get_result();
+
+        if ($res->num_rows > 0) {
+            $message = "Doctor already has an overlapping appointment.";
         } else {
-            $message = "❌ Error: " . $conn->error;
+            $stmt = $conn->prepare("
+                INSERT INTO appointments (patient_id, doctor_id, appointment_date, start_time, end_time) 
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->bind_param("iisss", $patient_id, $doctor_id, $date, $start, $end);
+            if ($stmt->execute()) {
+                $message = "Appointment booked successfully!";
+            } else {
+                $message = "DB Error: " . $stmt->error;
+            }
         }
-        $stmt->close();
     }
+    } catch(Exception $ex) {
+        var_dump($ex);
+    }
+    
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,11 +58,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
-
 <main class="container">
     <header>
         <h1>Book Appointment</h1>
-        <a href="../index.php" style="display:inline-block; margin-top:10px;">← Dashboard</a>
+        <a href="list.php" style="display:inline-block; margin-top:10px;">← Back to Appointments</a>
     </header>
 
     <?php if($message != ""): ?>
@@ -58,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <label>
             Patient:
             <select name="patient_id" required>
-                <option value="">Select Patient</option>
                 <?php while($p = $patients->fetch_assoc()): ?>
                     <option value="<?php echo $p['patient_id']; ?>"><?php echo htmlspecialchars($p['name']); ?></option>
                 <?php endwhile; ?>
@@ -68,9 +81,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <label>
             Doctor:
             <select name="doctor_id" required>
-                <option value="">Select Doctor</option>
                 <?php while($d = $doctors->fetch_assoc()): ?>
-                    <option value="<?php echo $d['doctor_id']; ?>"><?php echo htmlspecialchars($d['name']); ?> (<?php echo htmlspecialchars($d['specialization']); ?>)</option>
+                    <option value="<?php echo $d['doctor_id']; ?>">
+                        <?php echo htmlspecialchars($d['name']); ?> (<?php echo htmlspecialchars($d['specialization']); ?>)
+                    </option>
                 <?php endwhile; ?>
             </select>
         </label>
@@ -81,15 +95,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </label>
 
         <label>
-            Time:
-            <input type="time" name="appointment_time" required>
+            Start Time:
+            <input type="time" name="start_time" required>
         </label>
 
-        <button type="submit" style="background:#009688; color:#fff; padding:10px; border:none; border-radius:5px; cursor:pointer;">
+        <label>
+            End Time:
+            <input type="time" name="end_time" required>
+        </label>
+
+        <button type="submit" style="background:#4a6cf7; color:#fff; padding:10px; border:none; border-radius:5px; cursor:pointer;">
             Book Appointment
         </button>
     </form>
 </main>
-
 </body>
 </html>
