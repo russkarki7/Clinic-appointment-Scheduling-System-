@@ -36,5 +36,5 @@ Appointments are checked using start_time and end_time to prevent conflicts.
 - JavaScript (AJAX for availability check)
 
 ## Author
-Name: <Russ Karki>  
+Name: <Russ KArki>  
 Student ID:2436484
